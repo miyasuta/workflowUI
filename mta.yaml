@@ -1,0 +1,94 @@
+ID: workflowUI
+_schema-version: 3.2.0
+version: 0.0.1
+parameters:
+  enable-parallel-deployments: true
+modules:
+  - name: webapp_deployer
+    type: com.sap.application.content
+    path: deployer
+    requires:
+      - name: workflowUI_html5_repo_host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - name: startUI
+          artifacts:
+            - dist/startUI.zip
+          target-path: resources/
+        - name: taskUI
+          artifacts:
+            - dist/taskUI.zip
+          target-path: resources/          
+  - name: workflowUIdestination-content
+    type: com.sap.application.content
+    build-parameters:
+      no-source: true
+    requires:
+      - name: workflowUI_uaa
+        parameters:
+          service-key:
+            name: workflowUI_uaa-key
+      - name: workflowUI_html5_repo_host
+        parameters:
+          service-key:
+            name: workflowUI_html5_repo_host-key
+      - name: workflowUI_destination
+        parameters:
+          content-target: true
+    parameters:
+      content:
+        instance:
+          existing_destinations_policy: update
+          destinations:
+            - Name: workflowUI_html5_repo_host
+              ServiceInstanceName: workflowUI_html5_repo_host
+              ServiceKeyName: workflowUI_html5_repo_host-key
+              sap.cloud.service: workflowUI.service
+            - Name: workflowUI_uaa
+              Authentication: OAuth2UserTokenExchange
+              ServiceInstanceName: workflowUI_uaa
+              ServiceKeyName: workflowUI_uaa-key
+              sap.cloud.service: workflowUI.service
+  - name: startUI
+    type: html5
+    path: startUI
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:uimodule
+      supported-platforms: []
+  - name: taskUI
+    type: html5
+    path: taskUI
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:uimodule
+      supported-platforms: []      
+resources:
+  - name: workflowUI_destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service-plan: lite
+      service: destination
+      config:
+        HTML5Runtime_enabled: true
+        version: 1.0.0
+  - name: workflowUI_html5_repo_host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service-plan: app-host
+      service: html5-apps-repo
+      config:
+        sizeLimit: 2
+  - name: workflowUI_uaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa

@@ -1,0 +1,21 @@
+{
+  "generator-template-ui5-project": {
+    "projectname": "workflowUI",
+    "namespaceUI5": "demo",
+    "platform": "SAP Launchpad service",
+    "viewtype": "XML",
+    "ui5libs": "Content delivery network (SAPUI5)",
+    "newdir": false,
+    "namespaceURI": "demo",
+    "opa5pos": [
+      "Main"
+    ],
+    "opa5Journeys": [
+      "Main"
+    ],
+    "startUIs": [
+      "startUI"
+    ],
+    "setupCompleted": true
+  }
+}
