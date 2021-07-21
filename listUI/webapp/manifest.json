@@ -1,7 +1,7 @@
 {
   "_version": "1.21.0",
   "sap.app": {
-    "id": "demo.startUI",
+    "id": "demo.listUI",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -16,9 +16,9 @@
             "parameters": {},
             "additionalParameters": "allowed"
           },
-          "semanticObject": "startUI",
+          "semanticObject": "listUI",
           "action": "display",
-          "title": "Multilevel Approval Start",
+          "title": "Multilevel Approval List",
           "icon": "sap-icon://add"
         }
       }
@@ -43,7 +43,7 @@
   "sap.ui5": {
     "flexEnabled": true,
     "rootView": {
-      "viewName": "demo.startUI.view.App",
+      "viewName": "demo.listUI.view.App",
       "type": "XML",
       "async": true,
       "id": "idAppControl"
@@ -64,7 +64,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "demo.startUI.i18n.i18n"
+          "bundleName": "demo.listUI.i18n.i18n"
         }
       }
     },
@@ -79,24 +79,24 @@
       "config": {
         "routerClass": "sap.m.routing.Router",
         "viewType": "XML",
-        "viewPath": "demo.startUI.view",
+        "viewPath": "demo.listUI.view",
         "controlId": "idAppControl",
         "controlAggregation": "pages",
         "async": true
       },
       "routes": [
         {
-          "name": "Start",
+          "name": "List",
           "pattern": "",
           "target": [
-            "Start"
+            "List"
           ]
         }
       ],
       "targets": {
-        "Start": {
+        "List": {
           "viewLevel": 1,
-          "viewName": "Start"
+          "viewName": "List"
         }
       }
     }

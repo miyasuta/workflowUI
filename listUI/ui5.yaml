@@ -1,6 +1,6 @@
 specVersion: "2.2"
 metadata:
-  name: startUI_startUI
+  name: listUI_listUI
 type: application
 resources:
   configuration:
@@ -27,13 +27,11 @@ server:
         debug: true
         port: 1091
         xsappJson: webapp/xs-app.json
-        destinations: 
-          - name: wf_cloud_sdk
-            url: https://wfcloudsdk-hilarious-elephant.cfapps.eu10.hana.ondemand.com
+        destinations: []
 builder:
   customTasks:
     -  name: ui5-task-zipper
        afterTask: uglify
        configuration:
          includeDependencies: false
-         archiveName: startUI
+         archiveName: listUI

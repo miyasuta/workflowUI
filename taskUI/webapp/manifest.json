@@ -43,7 +43,7 @@
   "sap.ui5": {
     "flexEnabled": true,
     "rootView": {
-      "viewName": "demo.taskUI.view.MainView",
+      "viewName": "demo.taskUI.view.App",
       "type": "XML",
       "async": true,
       "id": "idAppControl"
@@ -98,7 +98,7 @@
           "viewType": "XML",
           "viewLevel": 1,
           "viewId": "idAppControl",
-          "viewName": "MainView"
+          "viewName": "App"
         }
       }
     }

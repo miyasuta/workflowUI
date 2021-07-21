@@ -4,7 +4,7 @@ sap.ui.require([
 ], function (Opa5, Press) {
   "use strict";
 
-  var sViewName = "demo.taskUI.view.App";
+  var sViewName = "demo.listUI.view.MainView";
 
   Opa5.createPageObjects({
     onTheMainPage: {
@@ -27,12 +27,12 @@ sap.ui.require([
             return this.waitFor({
               controlType: "sap.m.Title",
               properties: {
-                text: "demo.taskUI"
+                text: "demo.listUI"
               },
               success: function() {
                 Opa5.assert.ok(true, "The page shows the correct title");
               },
-              errorMessage: "App does not show the expected title demo.taskUI"
+              errorMessage: "App does not show the expected title demo.listUI"
             });
         }
       }

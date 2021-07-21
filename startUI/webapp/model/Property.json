@@ -1,0 +1,8 @@
+{
+    "sRequestId": "",
+    "oApprovalSteps": [],
+    "oEnable": {
+        "bRegister": true,
+        "sInput": true
+    }
+}

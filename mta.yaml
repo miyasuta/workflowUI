@@ -21,7 +21,11 @@ modules:
         - name: taskUI
           artifacts:
             - dist/taskUI.zip
-          target-path: resources/          
+          target-path: resources/    
+        - name: listUI
+          artifacts:
+            - dist/listUI.zip
+          target-path: resources/                 
   - name: workflowUIdestination-content
     type: com.sap.application.content
     build-parameters:
@@ -69,7 +73,16 @@ modules:
       commands:
         - npm install
         - npm run build:uimodule
-      supported-platforms: []      
+      supported-platforms: []   
+  - name: listUI
+    type: html5
+    path: listUI
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:uimodule  
+      supported-platforms: []         
 resources:
   - name: workflowUI_destination
     type: org.cloudfoundry.managed-service

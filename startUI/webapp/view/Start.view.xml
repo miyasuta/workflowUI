@@ -1,0 +1,53 @@
+ <mvc:View controllerName="demo.startUI.controller.Start"
+  displayBlock="true"
+  xmlns="sap.m"
+  xmlns:mvc="sap.ui.core.mvc">
+      <Page title="{i18n>title}">
+        <content>
+          <Table id="approversTable" items="{
+            path: 'viewModel>/approvalSteps'
+          }">
+            <headerToolbar>              
+              <OverflowToolbar>
+                <Text text="{viewModel>/requestId}"/>
+                <ToolbarSpacer/>
+                  <Button id="addApproverButton" icon="sap-icon://add" type="Transparent"
+                    press="onAddApprovalStep" visible="{viewModel>/input/enabled}"/>
+              </OverflowToolbar>
+            </headerToolbar>
+            <columns>
+              <Column width="15%">
+                <Label text="{i18n>TASK_TYPE}"/>
+              </Column>
+              <Column>
+                <Label text="{i18n>PROCESSOR}" vAlign="Top"/>
+              </Column>                            
+              <Column vAlign="Top">
+                <Label text="{i18n>COMMENT_FOR_APPROVER}"/>
+              </Column>              
+              <Column width="5%" hAlign="End">
+                  <Text text="" />
+              </Column>                            
+            </columns>
+            <items>
+              <ColumnListItem>
+                <cells>
+                  <Text text="{path: 'viewModel>taskType', formatter: '.taskType'}"/>
+                  <Input value="{viewModel>id}" type="Email" enabled="{viewModel>/input/enabled}"
+                    placeholder="example@com"/>
+                  <TextArea value="{viewModel>comment}" enabled="{viewModel>/input/enabled}" width="100%"/>
+                  <Button icon="sap-icon://delete" type="Transparent" press="handleDeleteApprovalStep" visible="{viewModel>/input/enabled}"/>
+                </cells>
+              </ColumnListItem>
+            </items>
+          </Table>
+        </content>
+        <footer>
+          <OverflowToolbar>
+            <ToolbarSpacer />
+            <Button text="{i18n>REQUEST_APPROVAL}" press="onPressRequestApproval" enabled="{viewModel>/input/enabled}" type="Emphasized" />
+          </OverflowToolbar>
+        </footer>
+      </Page>
+
+</mvc:View>

@@ -3,13 +3,12 @@ sap.ui.define(
         "sap/ui/core/mvc/Controller",
         "sap/ui/core/routing/History",
         "sap/ui/core/UIComponent",
-        "demo/startUI/model/formatter",
-	"sap/ui/model/json/JSONModel"
+        "demo/listUI/model/formatter"
     ],
-    function (Controller, History, UIComponent, formatter, JSONModel) {
+    function (Controller, History, UIComponent, formatter) {
         "use strict";
 
-        return Controller.extend("demo.startUI.controller.BaseController", {
+        return Controller.extend("demo.listUI.controller.BaseController", {
             formatter: formatter,
 
             /**
@@ -20,20 +19,6 @@ sap.ui.define(
              */
             getModel: function (sName) {
                 return this.getView().getModel(sName);
-            },
-
-            /**
-             * Convenience method for accessing the parent model.
-             * @public
-             * @returns Parent JSON Model "mCommon" defined in manifest
-             */
-            getParentModel: function (sName) {
-                var oModel = this.getOwnerComponent().getModel(sName);
-                if (!oModel) {
-                    oModel = new JSONModel({});
-                    this.setModel(oModel, sName);
-                }
-                return oModel;
             },
 
             /**
@@ -79,17 +64,6 @@ sap.ui.define(
                 } else {
                     this.getRouter().navTo("appHome", {}, true /*no history*/);
                 }
-            },
-
-            getBaseURL: function () {
-                var appId = this.getOwnerComponent().getManifestEntry("/sap.app/id");
-                var appPath = appId.replaceAll(".", "/");
-                var appModulePath = jQuery.sap.getModulePath(appPath);
-                return appModulePath;
-            },
-
-            getText: function (sTextId, aParams) {
-                return this.getResourceBundle().getText(sTextId, aParams);
             }
         });
     }
