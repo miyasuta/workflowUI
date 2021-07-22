@@ -11,7 +11,20 @@ sap.ui.define([
 
     return Controller.extend("demo.startUI.controller.App", {
         onInit: function () {
+            var oModel = new JSONModel({
+                approvalSteps: [],
+                requestId: "",
+                subject: "test",
+                input: {
+                    enabled: true
+                }
+            });
+            this.setModel(oModel, "viewModel");
             this.getRouter().getRoute("Start").attachMatched(this._onRouteMatched, this);
+
+            this._oMessageManager = sap.ui.getCore().getMessageManager();
+            this._oMessageManager.registerObject(this.getView(), true);
+
         },
 
         onAddApprovalStep: function () {
@@ -45,20 +58,40 @@ sap.ui.define([
         },
 
         _onRouteMatched: function (oEvent) {
-            //var oArgs = oEvent.getParameter("arguments");
-            this._initializeModel();
+            var workflowId = this.getOwnerComponent().getModel("common").getProperty("/workflowId");
+
+            // if workflowId is supplied, switch to display mode
+            if (workflowId) {
+                this._handleDisplay(workflowId);
+            } else {
+                this._handleCreate();
+            }
+        },
+
+        _handleCreate: function () {
+            var requestId = Math.floor(Date.now() / 1000).toString();
+            this.getModel("viewModel").setProperty("/requestId", requestId);
             this.onAddApprovalStep();
         },
 
-        _initializeModel: function () {
-            var oModel = new JSONModel({
-                approvalSteps: [],
-                requestId: Math.floor(Date.now() / 1000),
-                input: {
-                    enabled: true
-                }
+        _handleDisplay: function (workflowId) {
+            var oModel = this.getModel();
+            var oContextBinding = oModel.bindContext(`/WorkflowInstances(${workflowId})`, null, {
+                $expand: "Processors"
             });
-            this.setModel(oModel, "viewModel");
+            oContextBinding.requestObject()
+            .then(data=>{
+                this.getModel("viewModel").setProperty("/requestId", data.businessKey);
+                var processors = data.Processors.map(processor=>{
+                    return {
+                        id: processor.userId,
+                        comment: processor.comment,
+                        taskType: processor.taskType,
+                        index: processor.index
+                    }
+                });
+                this.getModel("viewModel").setProperty("/approvalSteps", processors);
+            });
         },
 
         _startInstance: function () {
@@ -66,8 +99,14 @@ sap.ui.define([
             this._sendRequest(context)
             .then(()=>{
                 this.getView().setBusy(false);
-                this.getModel("viewModel").setProperty("/input/enabled", false);
-                MessageToast.show(this.getText("SUCCESS", []));
+                //check if error exists
+                if (this.getModel().hasPendingChanges()) {
+                    var message = this._oMessageManager.getMessageModel().getData()[0].message;
+                    MessageBox.error(message);
+                } else {
+                    this.getModel("viewModel").setProperty("/input/enabled", false);
+                    MessageToast.show(this.getText("SUCCESS", []));
+                }
             })
             .catch((err)=> {
                 this.getView().setBusy(false);
@@ -76,24 +115,30 @@ sap.ui.define([
         },
 
         _sendRequest: function (context) {
-            //connect to workflow destination
-            const url = this.getBaseURL() + "/workflow/instance/multilevelapproval";
-            // eslint-disable-next-line no-console
-            console.log('Workflow URL: ', url);
+            var oModel = this.getModel();
+            var oListBinding = oModel.bindList("/WorkflowInstances");
+            oListBinding.create(context);
+            return oModel.submitBatch("$auto");
 
-            return new Promise((resolve, reject) => {
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", url);
-                xhr.setRequestHeader("content-type", "application/json");
-                xhr.onload = function () {
-                    if (xhr.status === 201) {
-                        resolve();
-                    } else {
-                        reject(xhr.response);
-                    }
-                }
-                xhr.send(JSON.stringify(context));
-            });
+
+            // //connect to workflow destination
+            // const url = this.getBaseURL() + "/workflow/instance/multilevelapproval";
+            // // eslint-disable-next-line no-console
+            // console.log('Workflow URL: ', url);
+
+            // return new Promise((resolve, reject) => {
+            //     var xhr = new XMLHttpRequest();
+            //     xhr.open("POST", url);
+            //     xhr.setRequestHeader("content-type", "application/json");
+            //     xhr.onload = function () {
+            //         if (xhr.status === 201) {
+            //             resolve();
+            //         } else {
+            //             reject(xhr.response);
+            //         }
+            //     }
+            //     xhr.send(JSON.stringify(context));
+            // });
         },
 
         _editContext: function () {
@@ -103,20 +148,22 @@ sap.ui.define([
             var aApprovalSteps = [];
             for (var i = 0; i < approvalSteps.length; i++) {
                 aApprovalSteps.push({
-                    id: approvalSteps[i].id,
+                    userId: approvalSteps[i].id,
                     comment: approvalSteps[i].comment,
                     isComplete: false,
                     taskType: "APPROVAL",
-                    decision: ""
+                    decision: "",
+                    index: approvalSteps[i].index
                 });
             }
             //requester
             var requester = this.getOwnerComponent().getModel("userInfo").getProperty("/email");
 
             var context = {
-                requestId: oViewModel.getProperty("/requestId"),
-                approvalSteps: aApprovalSteps,
-                requester: requester
+                businessKey: oViewModel.getProperty("/requestId"),
+                requester: requester,
+                subject: oViewModel.getProperty("/subject"),
+                Processors: aApprovalSteps
             };
             return context;
         },

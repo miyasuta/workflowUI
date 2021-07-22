@@ -3,10 +3,10 @@
   "routes": [
     {
       "source": "^/workflow/(.*)$",
-      "destination": "wf_cloud_sdk",
+      "destination": "wf-cap-srv",
       "authenticationType": "xsuaa",
       "csrfProtection": false
-    }, 
+    },
     {
       "source": "^/user-api/currentUser$",
       "target": "/currentUser",

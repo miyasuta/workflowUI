@@ -15,7 +15,7 @@
         </fb:FilterBar> -->
         <!-- <Table id="table" items="{path: '/WorkflowInstances'}"> -->
         <Table id="table" inset="true">        
-          <columns>
+          <columns>n>          
             <Column>
               <Text text="{i18n>ID}"/>
             </Column>

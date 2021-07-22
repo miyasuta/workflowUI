@@ -27,9 +27,9 @@ server:
         debug: true
         port: 1091
         xsappJson: webapp/xs-app.json
-        destinations: 
-          - name: wf_cloud_sdk
-            url: https://wfcloudsdk-hilarious-elephant.cfapps.eu10.hana.ondemand.com
+        destinations:
+         - name: wf-cap-srv
+           url: https://b736177ctrial-dev-wf-cap-srv.cfapps.eu10.hana.ondemand.com/
 builder:
   customTasks:
     -  name: ui5-task-zipper

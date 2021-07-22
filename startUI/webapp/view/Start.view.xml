@@ -4,7 +4,7 @@
   xmlns:mvc="sap.ui.core.mvc">
       <Page title="{i18n>title}">
         <content>
-          <Table id="approversTable" items="{
+          <Table id="approversTable" inset="true" items="{
             path: 'viewModel>/approvalSteps'
           }">
             <headerToolbar>              
@@ -16,6 +16,9 @@
               </OverflowToolbar>
             </headerToolbar>
             <columns>
+              <Column width="10%">
+                <Label text="{i18n>NUMBER}"/>
+              </Column>            
               <Column width="15%">
                 <Label text="{i18n>TASK_TYPE}"/>
               </Column>
@@ -32,6 +35,7 @@
             <items>
               <ColumnListItem>
                 <cells>
+                  <Text text="{viewModel>index}"/>
                   <Text text="{path: 'viewModel>taskType', formatter: '.taskType'}"/>
                   <Input value="{viewModel>id}" type="Email" enabled="{viewModel>/input/enabled}"
                     placeholder="example@com"/>
