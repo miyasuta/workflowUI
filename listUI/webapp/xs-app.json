@@ -2,6 +2,12 @@
   "welcomeFile": "/flpSandbox.html",
   "routes": [
     {
+      "source": "^/workflow/(.*)$",
+      "destination": "wf-cap-srv",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },     
+    {
       "source": "^(.*)",
       "target": "$1",
       "authenticationType": "xsuaa",

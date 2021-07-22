@@ -1,0 +1,14 @@
+{
+    "applications": {
+      "list-display": {
+        "additionalInformation": "SAPUI5.Component=demo.listUI",
+        "applicationType": "URL",
+        "url": "../"
+      },
+      "startUI-display": {
+        "additionalInformation": "SAPUI5.Component=demo.startUI",
+        "applicationType": "URL",
+        "url": "../resources/demo.startUI"
+      }
+    }
+  }

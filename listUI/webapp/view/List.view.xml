@@ -1,8 +1,43 @@
  <mvc:View controllerName="demo.listUI.controller.List"
   displayBlock="true"
   xmlns="sap.m"
+  xmlns:fb="sap.ui.comp.filterbar"
   xmlns:mvc="sap.ui.core.mvc">
     <Page title="{i18n>title}">
-      <content></content>
+      <content>
+        <!-- <fb:FilterBar search="onSearch">
+          <fb:FilterGroupItem groupName="__$INTERNAL$" label="Search WorkItem for" partOfCurrentVariant="true" visibleInFilterBar="true">
+            <fb:control>
+              <Select>                
+              </Select>
+            </fb:control>
+          </fb:FilterGroupItem>        
+        </fb:FilterBar> -->
+        <!-- <Table id="table" items="{path: '/WorkflowInstances'}"> -->
+        <Table id="table" inset="true">        
+          <columns>
+            <Column>
+              <Text text="{i18n>ID}"/>
+            </Column>
+            <Column>
+              <Text text="{i18n>STATUS}"/>
+            </Column>    
+            <Column>
+              <Text text="{i18n>STARTED_AT}"/>
+            </Column>  
+            <Column>
+              <Text text="{i18n>REQUESTER}"/>
+            </Column>                                 
+          </columns>
+          <dependents>
+            <ColumnListItem id="items" type="Navigation" press="onNavigate">
+              <ObjectIdentifier title="{businessKey}"/>
+              <Text text="{status}"/>
+              <Text text="{createdAt}"/>
+              <Text text="{requester}"/>
+            </ColumnListItem>           
+          </dependents>
+        </Table>
+      </content>
     </Page>
 </mvc:View>

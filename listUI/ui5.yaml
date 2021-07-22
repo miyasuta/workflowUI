@@ -27,7 +27,19 @@ server:
         debug: true
         port: 1091
         xsappJson: webapp/xs-app.json
-        destinations: []
+        destinations:
+         - name: wf-cap-srv
+           url: https://b736177ctrial-dev-wf-cap-srv.cfapps.eu10.hana.ondemand.com/
+    - name: ui5-middleware-servestatic
+      afterMiddleware: compression
+      mountPath: /resources/demo.startUI
+      configuration:
+        rootPath: "../startUI/webapp"    
+    - name: ui5-middleware-servestatic
+      afterMiddleware: compression
+      mountPath: /appconfig
+      configuration:
+        rootPath: "./appconfig"                
 builder:
   customTasks:
     -  name: ui5-task-zipper

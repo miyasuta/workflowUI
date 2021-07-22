@@ -22,6 +22,15 @@
           "icon": "sap-icon://add"
         }
       }
+    },
+    "dataSources": {
+      "workflow": {
+        "uri": "workflow/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
     }
   },
   "sap.ui": {
@@ -66,6 +75,21 @@
         "settings": {
           "bundleName": "demo.listUI.i18n.i18n"
         }
+      },
+      "": {
+        "type": "sap.ui.model.odata.v4.ODataModel",
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true,
+          "groupProperties": {
+            "default": {
+              "submit": "Auto"
+            }
+          }
+        },
+        "dataSource": "workflow"
       }
     },
     "resources": {
