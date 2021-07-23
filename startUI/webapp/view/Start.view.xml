@@ -1,15 +1,36 @@
  <mvc:View controllerName="demo.startUI.controller.Start"
   displayBlock="true"
   xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+	xmlns:f="sap.ui.layout.form"
   xmlns:mvc="sap.ui.core.mvc">
       <Page title="{i18n>title}">
         <content>
+          <f:SimpleForm editable="true" layout="ResponsiveGridLayout"
+            labelSpanXL="3"
+            labelSpanL="3"
+            labelSpanM="3"
+            labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="4"
+            emptySpanL="4"
+            emptySpanM="4"
+            emptySpanS="0"
+            columnsXL="1"
+            columnsL="1"
+            columnsM="1"          
+          >
+            <Label text="{i18n>ID}"/>
+            <Text text="{viewModel>/requestId}"/>
+            <Label text="{i18n>SUBJECT}"/>
+            <Input value="{viewModel>/subject}" enabled="{viewModel>/input/enabled}"/>
+          </f:SimpleForm >
+
           <Table id="approversTable" inset="true" items="{
             path: 'viewModel>/approvalSteps'
           }">
             <headerToolbar>              
               <OverflowToolbar>
-                <Text text="{viewModel>/requestId}"/>
                 <ToolbarSpacer/>
                   <Button id="addApproverButton" icon="sap-icon://add" type="Transparent"
                     press="onAddApprovalStep" visible="{viewModel>/input/enabled}"/>
@@ -40,7 +61,7 @@
                   <Input value="{viewModel>id}" type="Email" enabled="{viewModel>/input/enabled}"
                     placeholder="example@com"/>
                   <TextArea value="{viewModel>comment}" enabled="{viewModel>/input/enabled}" width="100%"/>
-                  <Button icon="sap-icon://delete" type="Transparent" press="handleDeleteApprovalStep" visible="{viewModel>/input/enabled}"/>
+                  <Button icon="sap-icon://delete" type="Transparent" press="onDeleteApprovalStep" visible="{viewModel>/input/enabled}"/>
                 </cells>
               </ColumnListItem>
             </items>
@@ -49,7 +70,13 @@
         <footer>
           <OverflowToolbar>
             <ToolbarSpacer />
-            <Button text="{i18n>REQUEST_APPROVAL}" press="onPressRequestApproval" enabled="{viewModel>/input/enabled}" type="Emphasized" />
+            <Button text="{i18n>REQUEST_APPROVAL}" press="onPressRequestApproval" 
+                    visible="{=${viewModel>/status} === ${constants>/status/INITIAL} || ${viewModel>/status} === ${constants>/status/PULLEDBACK}}" 
+                    type="Emphasized" />
+            <Button text="{i18n>PULLBACK}" press="onPullBack" visible="{=${viewModel>/status} === ${constants>/status/CAN_BE_PULLBACK}}" 
+                    type="Transparent" />
+            <Button text="{i18n>CANCEL_PULLBACK}" press="onCancelPullBack" visible="{=${viewModel>/status} === ${constants>/status/PULLEDBACK}}" 
+                    type="Transparent" />
           </OverflowToolbar>
         </footer>
       </Page>

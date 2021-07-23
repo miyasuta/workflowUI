@@ -2,24 +2,32 @@ sap.ui.define([
     "demo/startUI/controller/BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
-    "sap/m/MessageBox"
+    "sap/m/MessageBox",
+    "../model/Constants"
     ], function (Controller,
 	JSONModel,
 	MessageToast,
-	MessageBox) {
+	MessageBox,
+    constants) {
     "use strict";
 
     return Controller.extend("demo.startUI.controller.App", {
         onInit: function () {
+            //data model
             var oModel = new JSONModel({
                 approvalSteps: [],
                 requestId: "",
-                subject: "test",
+                subject: "",
                 input: {
                     enabled: true
-                }
+                },
+                status: constants.status.INITIAL
             });
             this.setModel(oModel, "viewModel");
+            //constants model
+            var oConstants = new JSONModel(constants);
+            this.setModel(oConstants, "constants");
+
             this.getRouter().getRoute("Start").attachMatched(this._onRouteMatched, this);
 
             this._oMessageManager = sap.ui.getCore().getMessageManager();
@@ -39,7 +47,32 @@ sap.ui.define([
             this.getModel("viewModel").refresh();
         },
 
-        handleDeleteApprovalStep: function(oEvent) {
+        onPullBack: function () {
+            this.getView().setBusy(true);
+            return this._exexuteAction("WorkflowService.suspend(...)")
+            .then(()=>{
+                //enable edit
+                this.getModel("viewModel").setProperty("/input/enabled", true);
+                //handle buttons
+                this.getModel("viewModel").setProperty("/status", constants.status.PULLEDBACK);
+                this.getView().setBusy(false);
+            })
+            .catch((err)=> {
+                this._handleError(err);
+            });
+        },
+
+        onCancelPullBack: function () {
+            this._exexuteAction("WorkflowService.resume(...)")
+            .then(()=>{
+                this._handleDisplay(this._workflowId);
+            })
+            .catch((err)=> {
+                this._handleError(err);
+            });
+        },
+
+        onDeleteApprovalStep: function(oEvent) {
             var approvalSteps = this.getModel("viewModel").getProperty("/approvalSteps");
             var approvalStep = oEvent.getSource().getBindingContext("viewModel").getObject();
 
@@ -53,16 +86,15 @@ sap.ui.define([
         },
 
         onPressRequestApproval: function () {
-            this.getView().setBusy(true);
             this._startInstance();
         },
 
         _onRouteMatched: function (oEvent) {
-            var workflowId = this.getOwnerComponent().getModel("common").getProperty("/workflowId");
+            this._workflowId = this.getOwnerComponent().getModel("common").getProperty("/workflowId");
 
             // if workflowId is supplied, switch to display mode
-            if (workflowId) {
-                this._handleDisplay(workflowId);
+            if (this._workflowId) {
+                this._handleDisplay(this._workflowId);
             } else {
                 this._handleCreate();
             }
@@ -75,6 +107,7 @@ sap.ui.define([
         },
 
         _handleDisplay: function (workflowId) {
+            this.getView().setBusy(true);
             var oModel = this.getModel();
             var oContextBinding = oModel.bindContext(`/WorkflowInstances(${workflowId})`, null, {
                 $expand: "Processors"
@@ -82,6 +115,10 @@ sap.ui.define([
             oContextBinding.requestObject()
             .then(data=>{
                 this.getModel("viewModel").setProperty("/requestId", data.businessKey);
+                this.getModel("viewModel").setProperty("/subject", data.subject);
+                //temprary: needs to be judged by workflow status
+                this.getModel("viewModel").setProperty("/status", this._getStatus(data));
+                this.getModel("viewModel").setProperty("/input/enabled", false);
                 var processors = data.Processors.map(processor=>{
                     return {
                         id: processor.userId,
@@ -91,10 +128,36 @@ sap.ui.define([
                     }
                 });
                 this.getModel("viewModel").setProperty("/approvalSteps", processors);
+                this.getView().setBusy(false);
+            })
+            .catch((err)=>{
+                this._handleError(err);
             });
         },
 
+        _handleError: function (err) {
+            this.getView().setBusy(false);
+            MessageBox.error(err);
+        },
+
+        _getStatus: function (oData) {
+            //needs further judgement: to be implemented in the backend
+            var status;
+            switch (oData.status) {
+                case constants.wfStatus.RUNNING:
+                    status = constants.status.CAN_BE_PULLBACK;
+                    break;
+                case constants.wfStatus.SUSPENDED:
+                    status = constants.status.PULLEDBACK;
+                    break;
+                default:
+                    status = constants.status.DISPLAY_ONLY;
+            };
+            return status;
+        },
+
         _startInstance: function () {
+            this.getView().setBusy(true);
             var context = this._editContext();
             this._sendRequest(context)
             .then(()=>{
@@ -102,16 +165,22 @@ sap.ui.define([
                 //check if error exists
                 if (this.getModel().hasPendingChanges()) {
                     var message = this._oMessageManager.getMessageModel().getData()[0].message;
-                    MessageBox.error(message);
+                    this._handleError(message);
                 } else {
                     this.getModel("viewModel").setProperty("/input/enabled", false);
                     MessageToast.show(this.getText("SUCCESS", []));
                 }
             })
             .catch((err)=> {
-                this.getView().setBusy(false);
-                MessageBox.error(err);
+                this._handleError(err);
             });
+        },
+
+        _exexuteAction (actionName) {
+            var oModel = this.getModel();
+            var oContext = oModel.createBindingContext(`/WorkflowInstances(${this._workflowId})`);
+            var oAction = oModel.bindContext(actionName, oContext);
+            return oAction.execute();
         },
 
         _sendRequest: function (context) {
@@ -119,26 +188,6 @@ sap.ui.define([
             var oListBinding = oModel.bindList("/WorkflowInstances");
             oListBinding.create(context);
             return oModel.submitBatch("$auto");
-
-
-            // //connect to workflow destination
-            // const url = this.getBaseURL() + "/workflow/instance/multilevelapproval";
-            // // eslint-disable-next-line no-console
-            // console.log('Workflow URL: ', url);
-
-            // return new Promise((resolve, reject) => {
-            //     var xhr = new XMLHttpRequest();
-            //     xhr.open("POST", url);
-            //     xhr.setRequestHeader("content-type", "application/json");
-            //     xhr.onload = function () {
-            //         if (xhr.status === 201) {
-            //             resolve();
-            //         } else {
-            //             reject(xhr.response);
-            //         }
-            //     }
-            //     xhr.send(JSON.stringify(context));
-            // });
         },
 
         _editContext: function () {

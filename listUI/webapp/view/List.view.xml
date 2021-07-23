@@ -20,6 +20,9 @@
               <Text text="{i18n>ID}"/>
             </Column>
             <Column>
+              <Text text="{i18n>SUBJECT}"/>
+            </Column>            
+            <Column>
               <Text text="{i18n>STATUS}"/>
             </Column>    
             <Column>
@@ -32,6 +35,7 @@
           <dependents>
             <ColumnListItem id="items" type="Navigation" press="onNavigate">
               <ObjectIdentifier title="{businessKey}"/>
+              <Text text="{subject}"/>
               <Text text="{status}"/>
               <Text text="{createdAt}"/>
               <Text text="{requester}"/>
