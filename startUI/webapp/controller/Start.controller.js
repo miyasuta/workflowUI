@@ -36,20 +36,49 @@ sap.ui.define([
         },
 
         onAddApprovalStep: function () {
-            var oApproverSteps = this.getModel("viewModel").getProperty("/approvalSteps");
-            oApproverSteps.push({
-                id: "",
-                comment: "",
-                taskType: "APPROVAL"
-            });
+            var step = {
+                    id: "",
+                    comment: "",
+                    taskType: "APPROVAL"
+                };
 
+            this._addApprovalStep(step);
+
+            // var oApproverSteps = this.getModel("viewModel").getProperty("/approvalSteps");
+            // oApproverSteps.push({
+            //     id: "",
+            //     comment: "",
+            //     taskType: "APPROVAL"
+            // });
+
+            // this.getModel("viewModel").setProperty("/approvalSteps", oApproverSteps);
+            // this.getModel("viewModel").refresh();
+        },
+
+        _addApprovalStep: function (oStep) {
+            var oApproverSteps = this.getModel("viewModel").getProperty("/approvalSteps");
+            oApproverSteps.push(oStep);
             this.getModel("viewModel").setProperty("/approvalSteps", oApproverSteps);
             this.getModel("viewModel").refresh();
         },
 
+
+        onPressRequestApproval: function () {
+            this.getView().setBusy(true);
+            if (this._workflowId) {
+                //if workflow already exists, cancel it first
+                this._exexuteAction("WorkflowService.cancel(...)")
+                .then(()=>{
+                    this._startInstance();
+                })
+            } else {
+                this._startInstance();
+            }
+        },
+
         onPullBack: function () {
             this.getView().setBusy(true);
-            return this._exexuteAction("WorkflowService.suspend(...)")
+            this._exexuteAction("WorkflowService.suspend(...)")
             .then(()=>{
                 //enable edit
                 this.getModel("viewModel").setProperty("/input/enabled", true);
@@ -85,10 +114,6 @@ sap.ui.define([
             }
         },
 
-        onPressRequestApproval: function () {
-            this._startInstance();
-        },
-
         _onRouteMatched: function (oEvent) {
             this._workflowId = this.getOwnerComponent().getModel("common").getProperty("/workflowId");
 
@@ -103,7 +128,54 @@ sap.ui.define([
         _handleCreate: function () {
             var requestId = Math.floor(Date.now() / 1000).toString();
             this.getModel("viewModel").setProperty("/requestId", requestId);
-            this.onAddApprovalStep();
+            this.getView().setBusy(true);
+            this._getUserInfo()
+            .then(()=>{
+                this._setInitialSteps();
+                this.getView().setBusy(false);
+            });
+        },
+
+        _getUserInfo: function () {
+            return new Promise((resolve)=>{
+                const url = this.getBaseURL() + "/user-api/currentUser";
+                var oModel = new JSONModel();
+                var mock = {
+                    firstname: "Dummy",
+                    lastname: "User",
+                    email: "dummy.user@com",
+                    name: "dummy.user@com",
+                    displayName: "Dummy User (dummy.user@com)"
+                };
+
+                oModel.loadData(url);
+                oModel.dataLoaded()
+                .then(()=>{
+                    //check if data has been loaded
+                    if (!oModel.getData().hasOwnProperty()) {
+                        oModel.setData(mock);
+                    }
+                    this.getOwnerComponent().setModel(oModel, "userInfo");
+                    resolve();
+                });
+            });
+        },
+
+        _setInitialSteps: function () {
+            var initialStep = {
+                index: 0,
+                id: this.getOwnerComponent().getModel("userInfo").getProperty("/email"),
+                comment: "",
+                taskType: "REQUEST"
+            };
+            this._addApprovalStep(initialStep);
+            var approvalStep = {
+                index: 1,
+                id: "",
+                comment: "",
+                taskType: "APPROVAL"
+            }
+            this._addApprovalStep(approvalStep);
         },
 
         _handleDisplay: function (workflowId) {
@@ -157,7 +229,6 @@ sap.ui.define([
         },
 
         _startInstance: function () {
-            this.getView().setBusy(true);
             var context = this._editContext();
             this._sendRequest(context)
             .then(()=>{
@@ -199,8 +270,8 @@ sap.ui.define([
                 aApprovalSteps.push({
                     userId: approvalSteps[i].id,
                     comment: approvalSteps[i].comment,
-                    isComplete: false,
-                    taskType: "APPROVAL",
+                    isComplete: approvalSteps[i].taskType === "REQUEST" ? true : false,
+                    taskType: approvalSteps[i].taskType,
                     decision: "",
                     index: approvalSteps[i].index
                 });
@@ -214,6 +285,10 @@ sap.ui.define([
                 subject: oViewModel.getProperty("/subject"),
                 Processors: aApprovalSteps
             };
+
+            if (this._workflowId) {
+                context.referenceId = this._workflowId;
+            }
             return context;
         },
 
