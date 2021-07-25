@@ -22,6 +22,15 @@ sap.ui.define(
 
                 // set the device model
                 this.setModel(models.createDeviceModel(), "device");
+
+                // get task data
+                var compData = this.getComponentData();
+                var startupParameters;
+                if (compData && compData.startupParameters) {
+                    startupParameters = compData.startupParameters;
+                    this.setModel(startupParameters, "startupParams");
+                    this.setModel(startupParameters.taskModel, "task");
+                }
             }
         });
     }
