@@ -88,8 +88,8 @@ sap.ui.define(
                 return appModulePath;
             },
 
-            getText: function (sTextId, aParams) {
-                return this.getResourceBundle().getText(sTextId, aParams);
+            getText: function (sTextId, aArgs) {
+                return this.getResourceBundle().getText(sTextId, aArgs);
             }
         });
     }

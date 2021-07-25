@@ -25,11 +25,8 @@ sap.ui.define(
 
                 // get task data
                 var compData = this.getComponentData();
-                var startupParameters;
-                if (compData && compData.startupParameters) {
-                    startupParameters = compData.startupParameters;
-                    this.setModel(startupParameters, "startupParams");
-                    this.setModel(startupParameters.taskModel, "task");
+                if (compData && compData.startupParameters && compData.startupParameters.taskModel) {
+                    this.setModel(compData.startupParameters.taskModel, "task");
                 }
             }
         });

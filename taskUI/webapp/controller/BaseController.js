@@ -64,6 +64,10 @@ sap.ui.define(
                 } else {
                     this.getRouter().navTo("appHome", {}, true /*no history*/);
                 }
+            },
+
+            getText: function (sTextId, aArgs) {
+                return this.getResourceBundle().getText(sTextId, aArgs);
             }
         });
     }
