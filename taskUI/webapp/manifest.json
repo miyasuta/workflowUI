@@ -86,19 +86,17 @@
       },
       "routes": [
         {
-          "name": "RouteMainView",
-          "pattern": "RouteMainView",
+          "name": "Task",
+          "pattern": "",
           "target": [
-            "TargetMainView"
+            "Task"
           ]
         }
       ],
       "targets": {
-        "TargetMainView": {
-          "viewType": "XML",
+        "Task": {
           "viewLevel": 1,
-          "viewId": "idAppControl",
-          "viewName": "App"
+          "viewName": "Task"
         }
       }
     }

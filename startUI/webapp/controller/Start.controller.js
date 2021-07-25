@@ -128,38 +128,39 @@ sap.ui.define([
         _handleCreate: function () {
             var requestId = Math.floor(Date.now() / 1000).toString();
             this.getModel("viewModel").setProperty("/requestId", requestId);
-            this.getView().setBusy(true);
-            this._getUserInfo()
-            .then(()=>{
-                this._setInitialSteps();
-                this.getView().setBusy(false);
-            });
+            this._setInitialSteps();
+            // this.getView().setBusy(true);
+            // this._getUserInfo()
+            // .then(()=>{
+            //     this._setInitialSteps();
+            //     this.getView().setBusy(false);
+            // });
         },
 
-        _getUserInfo: function () {
-            return new Promise((resolve)=>{
-                const url = this.getBaseURL() + "/user-api/currentUser";
-                var oModel = new JSONModel();
-                var mock = {
-                    firstname: "Dummy",
-                    lastname: "User",
-                    email: "dummy.user@com",
-                    name: "dummy.user@com",
-                    displayName: "Dummy User (dummy.user@com)"
-                };
+        // _getUserInfo: function () {
+        //     return new Promise((resolve)=>{
+        //         const url = this.getBaseURL() + "/user-api/currentUser";
+        //         var oModel = new JSONModel();
+        //         var mock = {
+        //             firstname: "Dummy",
+        //             lastname: "User",
+        //             email: "dummy.user@com",
+        //             name: "dummy.user@com",
+        //             displayName: "Dummy User (dummy.user@com)"
+        //         };
 
-                oModel.loadData(url);
-                oModel.dataLoaded()
-                .then(()=>{
-                    //check if data has been loaded
-                    if (!oModel.getData().hasOwnProperty()) {
-                        oModel.setData(mock);
-                    }
-                    this.getOwnerComponent().setModel(oModel, "userInfo");
-                    resolve();
-                });
-            });
-        },
+        //         oModel.loadData(url);
+        //         oModel.dataLoaded()
+        //         .then(()=>{
+        //             //check if data has been loaded
+        //             if (!oModel.getData().hasOwnProperty()) {
+        //                 oModel.setData(mock);
+        //             }
+        //             this.getOwnerComponent().setModel(oModel, "userInfo");
+        //             resolve();
+        //         });
+        //     });
+        // },
 
         _setInitialSteps: function () {
             var initialStep = {

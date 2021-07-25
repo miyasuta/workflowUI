@@ -7,16 +7,10 @@ sap.ui.define([
 
     return Controller.extend("demo.startUI.controller.App", {
         onInit: function () {
-            // this.getUserInfo()
-            //     .then(userInfo => {
-            //         this.getOwnerComponent().setModel(new JSONModel(userInfo), "userInfo");
-            //     });
-
-            // this.getUserInfo();
             this.getStartupParams();
         },
 
-        getUserInfo: function () {
+        // getUserInfo: function () {
             // const url = this.getBaseURL() + "/user-api/currentUser";
             // var oModel = new JSONModel();
             // var mock = {
@@ -60,7 +54,7 @@ sap.ui.define([
             //     }
             //     xhr.send();
             // });
-        },
+        // },
 
         getStartupParams: function () {
             var compData = this.getOwnerComponent().getComponentData();
