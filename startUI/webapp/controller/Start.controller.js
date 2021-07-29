@@ -43,16 +43,6 @@ sap.ui.define([
                 };
 
             this._addApprovalStep(step);
-
-            // var oApproverSteps = this.getModel("viewModel").getProperty("/approvalSteps");
-            // oApproverSteps.push({
-            //     id: "",
-            //     comment: "",
-            //     taskType: "APPROVAL"
-            // });
-
-            // this.getModel("viewModel").setProperty("/approvalSteps", oApproverSteps);
-            // this.getModel("viewModel").refresh();
         },
 
         _addApprovalStep: function (oStep) {
@@ -61,7 +51,6 @@ sap.ui.define([
             this.getModel("viewModel").setProperty("/approvalSteps", oApproverSteps);
             this.getModel("viewModel").refresh();
         },
-
 
         onPressRequestApproval: function () {
             this.getView().setBusy(true);
@@ -129,38 +118,7 @@ sap.ui.define([
             var requestId = Math.floor(Date.now() / 1000).toString();
             this.getModel("viewModel").setProperty("/requestId", requestId);
             this._setInitialSteps();
-            // this.getView().setBusy(true);
-            // this._getUserInfo()
-            // .then(()=>{
-            //     this._setInitialSteps();
-            //     this.getView().setBusy(false);
-            // });
         },
-
-        // _getUserInfo: function () {
-        //     return new Promise((resolve)=>{
-        //         const url = this.getBaseURL() + "/user-api/currentUser";
-        //         var oModel = new JSONModel();
-        //         var mock = {
-        //             firstname: "Dummy",
-        //             lastname: "User",
-        //             email: "dummy.user@com",
-        //             name: "dummy.user@com",
-        //             displayName: "Dummy User (dummy.user@com)"
-        //         };
-
-        //         oModel.loadData(url);
-        //         oModel.dataLoaded()
-        //         .then(()=>{
-        //             //check if data has been loaded
-        //             if (!oModel.getData().hasOwnProperty()) {
-        //                 oModel.setData(mock);
-        //             }
-        //             this.getOwnerComponent().setModel(oModel, "userInfo");
-        //             resolve();
-        //         });
-        //     });
-        // },
 
         _setInitialSteps: function () {
             var initialStep = {
@@ -189,7 +147,7 @@ sap.ui.define([
             .then(data=>{
                 this.getModel("viewModel").setProperty("/requestId", data.businessKey);
                 this.getModel("viewModel").setProperty("/subject", data.subject);
-                //temprary: needs to be judged by workflow status
+                //temporary: needs to be judged by workflow status
                 this.getModel("viewModel").setProperty("/status", this._getStatus(data));
                 this.getModel("viewModel").setProperty("/input/enabled", false);
                 var processors = data.Processors.map(processor=>{
