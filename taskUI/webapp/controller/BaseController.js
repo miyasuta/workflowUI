@@ -68,7 +68,14 @@ sap.ui.define(
 
             getText: function (sTextId, aArgs) {
                 return this.getResourceBundle().getText(sTextId, aArgs);
-            }
+            },
+
+            getBaseURL: function () {
+                var appId = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+                var appPath = appId.replaceAll(".", "/");
+                var appModulePath = jQuery.sap.getModulePath(appPath);
+                return appModulePath;
+            },
         });
     }
 );

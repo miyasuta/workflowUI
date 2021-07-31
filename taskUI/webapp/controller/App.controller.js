@@ -43,43 +43,49 @@ sap.ui.define([
         },
 
         _addButtons: function () {
-            var compData = this.getOwnerComponent().getComponentData();
-            if (!compData || !compData.startupParameters || !compData.startupParameters.inboxAPI) {
+            var inboxAPI = this._getInboxAPI();
+            if (!inboxAPI) {
                 return;
             }
 
             //approve
-            compData.startupParameters.inboxAPI.addAction({
+            inboxAPI.addAction({
                 action: this.getText("APPROVE"),
                 label: this.getText("APPROVE"),
                 type: "Accept"
             }, function () {
-                this._completeTask("APPROVE");
+                this._completeTask("approve");
             }, this);
 
             //reject
-            compData.startupParameters.inboxAPI.addAction({
+            inboxAPI.addAction({
                 action: this.getText("REJECT"),
                 label: this.getText("REJECT"),
                 type: "Reject"
             }, function () {
-                this._completeTask("REJECT");
+                this._completeTask("reject");
             }, this);
         },
 
         _bindData: function () {
-            var taskInstanceId = this.getOwnerComponent().getModel("task").getProperty("/InstanceID");
+            var taskInstanceId = this._getTaskInstanceId();
             this.getView().setBusy(true);
             this._getWorkflowInstanceId(taskInstanceId)
             .then((workflowId)=>{
+                this._workflowId = workflowId;
                 return this._getWorflowData(workflowId);
             })
             .then((data)=>{
                 this._doBind(data);
+                this.getView().setBusy(false);
             })
             .catch((err)=>{
                 this._handleError(err.message);
             });
+        },
+
+        _getTaskInstanceId: function () {
+            return this.getOwnerComponent().getModel("task").getProperty("/InstanceID");
         },
 
         _getWorkflowInstanceId: function (taskInstanceId) {
@@ -99,10 +105,10 @@ sap.ui.define([
 
         _getWorflowData: function (workflowId) {
             var oModel = this.getModel();
-            var oContextBinding = oModel.bindContext(`/WorkflowInstances(${workflowId})`, null, {
+            this._oContextBinding = oModel.bindContext(`/WorkflowInstances(${workflowId})`, null, {
                 $expand: "Processors"
             });
-            return oContextBinding.requestObject();
+            return this._oContextBinding.requestObject();
         },
 
         _doBind: function (data) {
@@ -114,27 +120,12 @@ sap.ui.define([
                     id: processor.userId,
                     comment: processor.comment,
                     taskType: processor.taskType,
-                    index: processor.index
-                }
+                    index: processor.index,
+                    decision: processor.decision,
+                    isComplete: processor.isComplete
+                };
             });
             this.getModel("viewModel").setProperty("/approvalSteps", processors);
-            this.getView().setBusy(false);
-        },
-
-        _completeTask: function (sAction) {
-            //collect data
-
-            //send
-            switch (sAction){
-                case "APPROVE":
-                    MessageToast.show("Approved");
-                    break;
-                case "REJECT":
-                    MessageToast.show("Rejected");
-                    break;
-                default:
-                    MessageToast.show("Completed");
-            }
         },
 
         _handleError: function (err) {
@@ -142,5 +133,76 @@ sap.ui.define([
             MessageBox.error(err);
         },
 
+        _completeTask: function (decision) {
+            var data = this._createRequestData();
+            var url = this.getBaseURL() + `/workflow/WorkflowInstances(${this._workflowId})`;
+            this.getView().setBusy(true);
+            this._sendRequest(url, data, decision)
+            .then(()=>{
+                this.getView().setBusy(false);
+                this._refreshTask();
+            })
+            .catch((err)=>{
+                this._handleError(err);
+            });
+
+        },
+
+        _createRequestData: function () {
+            var oViewModel = this.getModel("viewModel");
+            var approvalSteps = oViewModel.getProperty("/approvalSteps");
+            var aApprovalSteps = [];
+            for (var i = 0; i < approvalSteps.length; i++) {
+                aApprovalSteps.push({
+                    userId: approvalSteps[i].id,
+                    comment: approvalSteps[i].comment,
+                    isComplete: approvalSteps[i].isComplete,
+                    taskType: approvalSteps[i].taskType,
+                    decision: approvalSteps[i].decision,
+                    index: approvalSteps[i].index
+                });
+            }
+
+            var data = {
+                subject: oViewModel.getProperty("/subject"),
+                Processors: aApprovalSteps
+            };
+            return data;
+        },
+
+        _sendRequest: function (url, data, decision) {
+            return new Promise((resolve, reject)=>{
+                var xhr = new XMLHttpRequest();
+                xhr.open("PATCH", url);
+                xhr.setRequestHeader("content-type", "application/json");
+                xhr.setRequestHeader("decision", decision);
+                xhr.setRequestHeader("taskInstanceId", this._getTaskInstanceId());
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        resolve();
+                    } else {
+                        reject(xhr.responseText);
+                    }
+                };
+                xhr.send(JSON.stringify(data));
+            });
+        },
+
+        _getInboxAPI: function () {
+            var compData = this.getOwnerComponent().getComponentData();
+            if (!compData || !compData.startupParameters || !compData.startupParameters.inboxAPI) {
+                return null;
+            }
+            return compData.startupParameters.inboxAPI;
+        },
+
+        _refreshTask: function () {
+            var inboxAPI = this._getInboxAPI();
+            if (!inboxAPI) {
+                return;
+            }
+            var taskId = this.getOwnerComponent().getModel("task").getProperty("/InstanceID");
+            inboxAPI.updateTask("NA", taskId);
+        }
     });
 });
