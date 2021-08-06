@@ -22,8 +22,6 @@ sap.ui.define([
                 }
             });
             this.setModel(oModel, "viewModel");
-
-            this._addButtons();
             this._bindData();
 
             this._oMessageManager = sap.ui.getCore().getMessageManager();
@@ -43,28 +41,28 @@ sap.ui.define([
             }
         },
 
-        _addButtons: function () {
+        _addButtons: function (oTask) {
             var inboxAPI = this._getInboxAPI();
             if (!inboxAPI) {
                 return;
             }
 
-            //approve
-            inboxAPI.addAction({
-                action: this.getText("APPROVE"),
-                label: this.getText("APPROVE"),
-                type: "Accept"
-            }, function () {
-                this._completeTask("approve");
-            }, this);
+            if (oTask.isRequester) {
+                this._addAction("APPLY", "Emphasized", "apply");
+                this._addAction("TERMINATE", "Transparent", "cancel");
+            } else {
+                this._addAction("APPROVE", "Accept", "approve");
+                this._addAction("REJECT", "Reject", "reject");
+            }
+        },
 
-            //reject
-            inboxAPI.addAction({
-                action: this.getText("REJECT"),
-                label: this.getText("REJECT"),
-                type: "Reject"
+        _addAction: function (textName, buttonType, decision) {
+            this._getInboxAPI().addAction({
+                action: this.getText(textName),
+                label: this.getText(textName),
+                type: buttonType
             }, function () {
-                this._completeTask("reject");
+                this._completeTask(decision);
             }, this);
         },
 
@@ -78,6 +76,7 @@ sap.ui.define([
             })
             .then((data)=>{
                 this._doBind(data);
+                this._addButtons(data[2]);
                 this.getView().setBusy(false);
             })
             .catch((err)=>{
@@ -111,15 +110,16 @@ sap.ui.define([
 
             return Promise.all([
                 this._oContextBinding.requestObject(),
-                this._getProcessors()
+                this._executeFunction("WorkflowService.getProcessors(...)"),
+                this._executeFunction("WorkflowService.getActiveTask(...)")
             ]);
         },
 
-        _getProcessors: function () {
+        _executeFunction: function (functionName) {
             return new Promise((resolve, reject)=>{
                 var oModel = this.getModel();
                 var oContext = oModel.createBindingContext(`/WorkflowInstances(${this._workflowId})`);
-                var oFunction = oModel.bindContext("WorkflowService.getProcessors(...)", oContext);
+                var oFunction = oModel.bindContext(functionName, oContext);
                 oFunction.execute()
                 .then(()=>{
                     resolve(oFunction.getBoundContext().getObject());
@@ -166,7 +166,7 @@ sap.ui.define([
                     userId: this.getModel("viewModel").getProperty("/requester"), //temp
                     isRequester: true
                 }
-                        }
+            }
             this._sendRequest(url, data, decision, reworkObj)
             .then(()=>{
                 this.getView().setBusy(false);
@@ -175,7 +175,6 @@ sap.ui.define([
             .catch((err)=>{
                 this._handleError(err);
             });
-
         },
 
         _createRequestData: function () {
@@ -222,11 +221,14 @@ sap.ui.define([
         },
 
         _getInboxAPI: function () {
-            var compData = this.getOwnerComponent().getComponentData();
-            if (!compData || !compData.startupParameters || !compData.startupParameters.inboxAPI) {
-                return null;
+            if (!this._inboxAPI) {
+                var compData = this.getOwnerComponent().getComponentData();
+                if (!compData || !compData.startupParameters || !compData.startupParameters.inboxAPI) {
+                    return null;
+                }
+                this._inboxAPI = compData.startupParameters.inboxAPI;
             }
-            return compData.startupParameters.inboxAPI;
+            return this._inboxAPI;
         },
 
         _refreshTask: function () {
@@ -236,6 +238,11 @@ sap.ui.define([
             }
             var taskId = this.getOwnerComponent().getModel("task").getProperty("/InstanceID");
             inboxAPI.updateTask("NA", taskId);
+        },
+
+        //formatters
+        taskType: function (taskType) {
+            return this.getText(taskType, []);
         }
     });
 });
