@@ -18,7 +18,7 @@ sap.ui.define([
                 subject: "",
                 requester: "",
                 input: {
-                    enabled: true
+                    enabled: false
                 }
             });
             this.setModel(oModel, "viewModel");

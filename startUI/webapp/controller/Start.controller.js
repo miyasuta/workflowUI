@@ -19,7 +19,7 @@ sap.ui.define([
                 requestId: "",
                 subject: "",
                 input: {
-                    enabled: true
+                    enabled: false
                 },
                 status: constants.status.INITIAL
             });
@@ -118,6 +118,7 @@ sap.ui.define([
             var requestId = Math.floor(Date.now() / 1000).toString();
             this.getModel("viewModel").setProperty("/requestId", requestId);
             this._setInitialSteps();
+            this.getModel("viewModel").setProperty("/input/enabled", true);
         },
 
         _setInitialSteps: function () {
