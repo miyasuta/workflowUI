@@ -65,6 +65,48 @@
               </ColumnListItem>
             </items>
           </Table>
+  
+          <UploadCollection id="uploadCollection" 
+            change="onAttachmentsChange"
+            beforeUploadStarts="onBeforeUploadStarts"
+            uploadComplete="onUploadComplete"
+            uploadEnabled="{viewModel>/input/enabled}"
+            items="{
+              path: 'attachments>/objects',
+              filters : [
+                { path : 'object/succinctProperties/cmis:baseTypeId', operator : 'EQ', value1 : 'cmis:document'}
+              ],
+              templateShareable: false
+            }">
+            <items>
+              <UploadCollectionItem 
+                documentId="{attachments>object/succinctProperties/cmis:objectId}"
+                fileName="{attachments>object/succinctProperties/cmis:name}"
+                mimeType="{attachments>object/succinctProperties/cmis:contentStreamMimeType}"
+                url="{
+                    path: 'attachments>object/succinctProperties/cmis:objectId',
+                    formatter: '.formatDownloadUrl'
+                    }"
+                enableEdit="false" enableDelete="{viewModel>/input/enabled}" 
+                deletePress="onDeletePressed">
+                <attributes>
+                    <ObjectAttribute title="{i18n>UPLOADED_BY}"
+                        text="{attachments>object/succinctProperties/cmis:createdBy}"
+                        active="false" class="displayContents"/>
+                    <ObjectAttribute title="{i18n>UPLOADED_ON}"
+                        text="{
+                            path: 'attachments>object/succinctProperties/cmis:creationDate'
+                            }"
+                        active="false" class="displayContents"/>
+                    <ObjectAttribute title="{i18n>FILE_SIZE}"
+                        text="{
+                            path: 'attachments>object/succinctProperties/cmis:contentStreamLength'
+                            }"
+                        active="false" class="displayContents"/>
+                </attributes>                    
+              </UploadCollectionItem>     
+            </items>          
+          </UploadCollection>
         </content>
         <footer>
           <OverflowToolbar>

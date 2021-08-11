@@ -30,6 +30,9 @@ server:
         destinations:
          - name: wf-cap-srv
            url: https://b736177ctrial-dev-wf-cap-srv.cfapps.eu10.hana.ondemand.com/
+         - name: bpmworkflowruntime_attachments
+           url: https://api-sdm-di.cfapps.eu10.hana.ondemand.com/browser/b158ad7c-ea38-4fca-8308-5c04fbbb678d/root/
+           authenticationMethod: route
 builder:
   customTasks:
     -  name: ui5-task-zipper

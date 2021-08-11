@@ -3,12 +3,14 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
-    "../model/Constants"
+    "../model/Constants",
+    "sap/m/UploadCollectionParameter"
     ], function (Controller,
 	JSONModel,
 	MessageToast,
 	MessageBox,
-    constants) {
+	constants,
+	UploadCollectionParameter) {
     "use strict";
 
     return Controller.extend("demo.startUI.controller.App", {
@@ -27,6 +29,9 @@ sap.ui.define([
             //constants model
             var oConstants = new JSONModel(constants);
             this.setModel(oConstants, "constants");
+
+            //attachments model
+            this.setModel(new JSONModel(), "attachments");
 
             this.getRouter().getRoute("Start").attachMatched(this._onRouteMatched, this);
 
@@ -114,11 +119,242 @@ sap.ui.define([
             }
         },
 
+        onAttachmentsChange: function (oEvent) {
+            var oUploadCollection = oEvent.getSource();
+            oUploadCollection.addParameter(new UploadCollectionParameter({
+                name: "cmisAction",
+                value: "createDocument" // create file
+            }));
+
+            oUploadCollection.addParameter(new UploadCollectionParameter({
+                name: "propertyId[0]",
+                value: "cmis:objectTypeId"
+            }));
+
+            oUploadCollection.addParameter(new UploadCollectionParameter({
+                name: "propertyValue[0]",
+                value: "cmis:document"
+            }));
+
+            oUploadCollection.addParameter(new UploadCollectionParameter({
+                name: "propertyId[1]",
+                value: "cmis:name"
+            }));
+
+            oUploadCollection.addParameter(new UploadCollectionParameter({
+                name: "propertyValue[1]",
+                value: oEvent.getParameter("files")[0].name
+            }));
+        },
+
+        onBeforeUploadStarts: function (oEvent) {
+            var oUploadCollection = this.byId("uploadCollection"),
+                oFileUploader = oUploadCollection._getFileUploader();
+                oFileUploader.setUseMultipart(true);
+                oEvent.getParameters().addHeaderParameter(new UploadCollectionParameter({
+                    name: "X-CSRF-Token",
+                    value: this.token
+                }));
+        },
+
+        onUploadComplete: function (oEvent) {
+            var oUploadCollection = this.byId("uploadCollection"),
+                cItems = oUploadCollection.aItems.length,
+                i;
+
+            for (i = 0; i < cItems; i++) {
+                if (oUploadCollection.aItems[i]._status === "uploading") {
+                    oUploadCollection.aItems[i]._percentUploaded = 100;
+                    oUploadCollection.aItems[i]._status = oUploadCollection._displayStatus;
+                    oUploadCollection._oItemToUpdate = null;
+                    break;
+                }
+            }
+
+            oUploadCollection.getBinding("items").refresh();
+            this._loadAttachments();
+        },
+
+        onDeletePressed: function (oEvent) {
+            var sAttachmentsUploadURL = this.byId("uploadCollection").getUploadUrl();
+            var item = oEvent.getSource().getBindingContext("attachments").getModel().getProperty(oEvent.getSource().getBindingContext("attachments").getPath());
+            var objectId = item.object.succinctProperties["cmis:objectId"];
+            var fileName = item.object.succinctProperties["cmis:name"];
+            var oThisController = this;
+
+            var oFormData = new window.FormData();
+            oFormData.append("cmisAction", "delete");
+            oFormData.append("objectId", objectId);
+
+            var oSettings = {
+                "url": sAttachmentsUploadURL,
+                "method": "POST",
+                "async": false,
+                "data": oFormData,
+                "cache": false,
+                "contentType": false,
+                "processData": false,
+                "headers": {
+                    'X-CSRF-Token': this.token
+                }
+            };
+
+            $.ajax(oSettings)
+                .done(() => {
+                    MessageToast.show(`File '${fileName}' is deleted`);
+                })
+                .fail(err => {
+                    if (err !== undefined) {
+                        this._handleError($.parseJSON(err.responseText));
+                    } else {
+                        this._handleError(oThisController.getText("UNKNOWN_ERROR"));
+                    }
+                });
+            this._loadAttachments();
+        },
+
+        _loadAttachments: function () {
+            var oUploadCollection = this.byId("uploadCollection");
+            var sAttachmentsUploadURL = oUploadCollection.getUploadUrl();
+            var sUrl = sAttachmentsUploadURL + "?succinct=true";
+            var oSettings = {
+                "url": sUrl,
+                "method": "GET"
+            };
+
+            var oThisController = this;
+
+            $.ajax(oSettings)
+                .done(results => {
+                    oThisController._mapAttachmentsModel(results);
+                    oUploadCollection.setBusy(false);
+                })
+                .fail(err => {
+                    if (err !== undefined) {
+                        var oErrResponse = $.parseJSON(err.responseText);
+                        oThisController._handleError(oErrResponse);
+                    } else {
+                        oThisController._handleError(oThisController.getMessage("UNKNOWN_ERROR"));
+                    }
+                });
+        },
+
+        _mapAttachmentsModel: function (data) {
+            this.getModel("attachments").setData(data);
+            this.getModel("attachments").refresh();
+        },
+
         _handleCreate: function () {
             var requestId = Math.floor(Date.now() / 1000).toString();
+            this._createAttachmentURL(requestId);
             this.getModel("viewModel").setProperty("/requestId", requestId);
             this._setInitialSteps();
             this.getModel("viewModel").setProperty("/input/enabled", true);
+        },
+
+        _createAttachmentURL: function (folderName) {
+            this.getView().setBusy(true);
+            //check if folder "MuliLevelApproval" exists
+            this._folderExists("MuliLevelApproval")
+            //if it doesn't exist, create one
+            .then((folderExists)=> {
+                if (folderExists) {
+                    return Promise.resolve();
+                } else {
+                    return this._createFolder("MuliLevelApproval");
+                }
+            })
+            //then, create subfolder for this workflow instance
+            .then(()=> {
+                return this._createFolder(folderName);
+            })
+            .then((objectId)=> {
+                //return attachment url
+                var attachmentURL = this.getBaseURL() + `/docservice/WorkflowManagement/MuliLevelApproval/${folderName}/`;
+                this.byId("uploadCollection").setUploadUrl(attachmentURL);
+                this.getView().setBusy(false);
+            })
+            .catch((err)=>{
+                this._handleError(err);
+            });
+        },
+
+        _folderExists: function (folderName) {
+            var url = this.getBaseURL() + `/docservice/WorkflowManagement/${folderName}/`;
+
+            var oSettings = {
+                "url": url,
+                "method": "GET",
+                "async": false,
+                "headers": {
+                    "ContentType": 'application/json',
+                    "Accept": 'application/json',
+                    "cache": false,
+                    'X-CSRF-Token': 'Fetch'
+                }
+            };
+
+            return new Promise((resolve, reject)=> {
+                var oThisController = this;
+                $.ajax(oSettings)
+                    .done((results, textStatus, request) => {
+                        oThisController.token = request.getResponseHeader('X-CSRF-Token');
+                        if (request.status === 200) {
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    })
+                    .fail((err)=> {
+                        oThisController.token = err.getResponseHeader('X-Csrf-Token');
+                        if (err.status === 404) {
+                            resolve(false);
+                        } else {
+                            reject($.parseJSON(err.responseText).message);
+                        }
+                    });
+            });
+        },
+
+        _createFolder: function (folderName) {
+            var url;
+            if (folderName === "MuliLevelApproval") {
+                url = this.getBaseURL() + `/docservice/WorkflowManagement/`;
+            } else {
+                url = this.getBaseURL() + `/docservice/WorkflowManagement/MuliLevelApproval/`;
+            }
+            var oFormData = new window.FormData();
+            oFormData.append("cmisAction", "createFolder");
+            oFormData.append("succinct", "true");
+            oFormData.append("propertyId[0]", "cmis:name");
+            oFormData.append("propertyValue[0]", folderName);
+            oFormData.append("propertyId[1]", "cmis:objectTypeId");
+            oFormData.append("propertyValue[1]", "cmis:folder");
+
+            var oSettings = {
+                "url": url,
+                "method": "POST",
+                "async": false,
+                "data": oFormData,
+                "cache": false,
+                "contentType": false,
+                "processData": false,
+                "headers": {
+                    'X-CSRF-Token': this.token
+                }
+            };
+
+            return new Promise((resolve, reject) => {
+                $.ajax(oSettings)
+                    .done((results) => {
+                        resolve(results.succinctProperties["cmis:objectId"]);
+                    })
+                    .fail(err => {
+                        if (err !== undefined) {
+                            reject($.parseJSON(err.responseText).message);
+                        }
+                    });
+            });
         },
 
         _setInitialSteps: function () {
@@ -255,6 +491,12 @@ sap.ui.define([
         //formatters
         taskType: function (taskType) {
             return this.getText(taskType, []);
+        },
+
+        formatDownloadUrl: function (objectId) {
+            var oUploadCollection = this.byId("uploadCollection");
+            var sAttachmentsUploadURL = oUploadCollection.getUploadUrl();
+            return sAttachmentsUploadURL + `?objectId=${objectId}&cmisselector=content`;
         }
     });
 });
