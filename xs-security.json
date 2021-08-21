@@ -14,9 +14,8 @@
       "description": "UAA",
       "scope-references": ["uaa.user"]
     }
-  ],
-  "authorities":["$XSAPPNAME(application,wf-cap).wf-cap"],  
+  ], 
   "foreign-scope-references": [
-    "$XSAPPNAME(application,wf-cap).wf-cap"
+    "$XSAPPNAME(application,wf-cap).wf-cap-scope"
   ]
 }
