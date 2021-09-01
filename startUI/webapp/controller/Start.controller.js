@@ -425,6 +425,10 @@ sap.ui.define([
         },
 
         _startInstance: function () {
+            //reset errors in the last request
+            this.getModel().resetChanges();
+            this._oMessageManager.removeAllMessages();
+
             var context = this._editContext();
             this._sendRequest(context)
             .then(()=>{
